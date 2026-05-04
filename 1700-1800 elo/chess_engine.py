@@ -1441,6 +1441,10 @@ class ChessAI:
                         opponent_pieces.append(piece.lower())
         
         book_moves = []
+        book_move_found = False
+        best_book_move = None
+        best_book_score = -math.inf if self.engine.turn == 'white' else math.inf
+        
         if len(self.engine.move_history) < 12:
             book_moves = find_book_moves(self.engine)
         
@@ -1495,22 +1499,9 @@ class ChessAI:
                 
                 if safe_book_moves:
                     safe_book_moves.sort(key=lambda x: (x[2], x[1]), reverse=True)
-                    
                     best_book_move = safe_book_moves[0][0]
                     best_book_score = safe_book_moves[0][1]
-                    is_perfectly_safe = safe_book_moves[0][2]
-                    
-                    if is_perfectly_safe and best_book_score >= -50:
-                        return best_book_move
-                else:
-                    best_book_move = None
-                    best_book_score = -math.inf if our_color == 'white' else math.inf
-            else:
-                best_book_move = None
-                best_book_score = -math.inf if our_color == 'white' else math.inf
-        else:
-            best_book_move = None
-            best_book_score = -math.inf if our_color == 'white' else math.inf
+                    book_move_found = True
         
         start_time = time.time()
         best_move = None
@@ -1577,18 +1568,20 @@ class ChessAI:
             if time.time() - start_time > TIME_LIMIT * 0.9:
                 break
         
-        if best_book_move and best_minimax_move:
+        best_minimax_move = best_move
+        
+        if book_move_found and best_minimax_move:
             if our_color == 'white':
-                if best_book_score >= best_minimax_score - 30:
-                    best_move = best_book_move
-                else:
+                if best_minimax_score >= best_book_score - 100:
                     best_move = best_minimax_move
+                else:
+                    best_move = best_book_move
             else:
-                if best_book_score <= best_minimax_score + 30:
-                    best_move = best_book_move
-                else:
+                if best_minimax_score <= best_book_score + 100:
                     best_move = best_minimax_move
-        elif best_book_move:
+                else:
+                    best_move = best_book_move
+        elif book_move_found:
             best_move = best_book_move
         elif best_minimax_move:
             best_move = best_minimax_move
