@@ -262,6 +262,99 @@ class ChessEngine:
             return max(abs(dr), abs(dc)) == 1
         return False
     
+    def evaluate_passed_pawns(self, is_endgame):
+        score = 0
+        
+        for row in range(8):
+            for col in range(8):
+                piece = self.board[row][col]
+                
+                if piece == 'P':
+                    is_passed = True
+                    for r in range(row):
+                        for c in [col - 1, col, col + 1]:
+                            if 0 <= c < 8 and self.board[r][c] == 'p':
+                                is_passed = False
+                                break
+                        if not is_passed:
+                            break
+                    
+                    if is_passed:
+                        progress = 7 - row
+                        
+                        if is_endgame:
+                            passed_value = 50 + progress * 40
+                            
+                            moves_to_queen = progress
+                            
+                            opponent_king = self.find_king(self.board, 'black')
+                            if opponent_king:
+                                king_row, king_col = opponent_king
+                                king_distance = max(abs(king_row - row), abs(king_col - col))
+                                if king_distance <= moves_to_queen + 1:
+                                    passed_value -= (moves_to_queen - king_distance) * 20
+                            
+                            for r in range(8):
+                                if self.board[r][col] == 'R':
+                                    passed_value += 30
+                                    break
+                            
+                            is_defended = False
+                            if col > 0 and row + 1 < 8 and self.board[row + 1][col - 1] == 'P':
+                                is_defended = True
+                            if col < 7 and row + 1 < 8 and self.board[row + 1][col + 1] == 'P':
+                                is_defended = True
+                            if is_defended:
+                                passed_value += 40
+                            
+                            score += passed_value
+                        else:
+                            score += 30 + progress * 20
+                
+                elif piece == 'p':
+                    is_passed = True
+                    for r in range(row + 1, 8):
+                        for c in [col - 1, col, col + 1]:
+                            if 0 <= c < 8 and self.board[r][c] == 'P':
+                                is_passed = False
+                                break
+                        if not is_passed:
+                            break
+                    
+                    if is_passed:
+                        progress = row
+                        
+                        if is_endgame:
+                            passed_value = 50 + progress * 40
+                            
+                            moves_to_queen = progress
+                            
+                            opponent_king = self.find_king(self.board, 'white')
+                            if opponent_king:
+                                king_row, king_col = opponent_king
+                                king_distance = max(abs(king_row - row), abs(king_col - col))
+                                if king_distance <= moves_to_queen + 1:
+                                    passed_value -= (moves_to_queen - king_distance) * 20
+                            
+                            for r in range(8):
+                                if self.board[r][col] == 'r':
+                                    passed_value += 30
+                                    break
+                            
+                            is_defended = False
+                            if col > 0 and row - 1 >= 0 and self.board[row - 1][col - 1] == 'p':
+                                is_defended = True
+                            if col < 7 and row - 1 >= 0 and self.board[row - 1][col + 1] == 'p':
+                                is_defended = True
+                            if is_defended:
+                                passed_value += 40
+                            
+                            score -= passed_value
+                        else:
+                            score -= 30 + progress * 20
+        
+        return score
+
     def get_piece_moves(self, row, col):
         piece = self.board[row][col]
         color = self.get_piece_color(piece)
@@ -849,6 +942,8 @@ class ChessEngine:
                                 if 0 <= c < 8 and self.board[r][c] == 'p':
                                     is_passed = False
                                     break
+                            if not is_passed:
+                                break
                         if is_passed:
                             if white_king_pos:
                                 dist = max(abs(white_king_pos[0] - row), abs(white_king_pos[1] - col))
@@ -864,6 +959,8 @@ class ChessEngine:
                                 if 0 <= c < 8 and self.board[r][c] == 'P':
                                     is_passed = False
                                     break
+                            if not is_passed:
+                                break
                         if is_passed:
                             if black_king_pos:
                                 dist = max(abs(black_king_pos[0] - row), abs(black_king_pos[1] - col))
@@ -871,6 +968,31 @@ class ChessEngine:
                             if white_king_pos:
                                 dist = max(abs(white_king_pos[0] - row), abs(white_king_pos[1] - col))
                                 score += max(0, (7 - dist)) * 5
+        
+        passed_pawn_score = self.evaluate_passed_pawns(is_endgame)
+        score += passed_pawn_score
+        
+        if is_endgame:
+            white_pawn_rows = [row for row in range(8) for col in range(8) if self.board[row][col] == 'P']
+            black_pawn_rows = [row for row in range(8) for col in range(8) if self.board[row][col] == 'p']
+            
+            if white_pawn_rows:
+                max_white_progress = max(7 - row for row in white_pawn_rows)
+                if max_white_progress >= 5:
+                    black_king = self.find_king(self.board, 'black')
+                    if black_king:
+                        king_distance = max(abs(black_king[0] - 7), abs(black_king[1]))
+                        if king_distance > max_white_progress:
+                            score += (max_white_progress - 2) * 50
+            
+            if black_pawn_rows:
+                max_black_progress = max(row for row in black_pawn_rows)
+                if max_black_progress <= 2:
+                    white_king = self.find_king(self.board, 'white')
+                    if white_king:
+                        king_distance = max(abs(white_king[0] - 0), abs(white_king[1]))
+                        if king_distance > (7 - max_black_progress):
+                            score -= (max_black_progress - 2) * 50
         
         return score
     
