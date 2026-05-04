@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.dll
+*.dylib
+pieces/
+.DS_Store
+Thumbs.db
+*.log
