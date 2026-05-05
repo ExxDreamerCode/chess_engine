@@ -51,8 +51,8 @@ class UCIEngine:
                 sys.stderr.flush()
                 
     def send_id(self):
-        print(f"id name DreamerExx_ChessEngine v1.5 (Adaptive Depth)")
-        print(f"id author Dreamer_Exx (14 years old)")
+        print(f"id name DreamerExx_ChessEngine v1.5")
+        print(f"id author Dreamer_Exx")
         print("uciok")
         sys.stdout.flush()
         
