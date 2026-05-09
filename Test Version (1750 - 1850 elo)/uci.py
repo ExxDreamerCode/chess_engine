@@ -13,7 +13,7 @@ class UCIEngine:
         self.start_time = 0
         self.max_time = 0
         
-        self.max_depth_limit = 7
+        self.max_depth_limit = 6
         self.min_depth_limit = 2
         self.move_time_limit = 5.0
         self.max_mate_depth = 10
@@ -262,9 +262,9 @@ class UCIEngine:
             adaptive_depth = min(depth_param, 8)
         else:
             if time_limit >= 8.0:
-                adaptive_depth = 6
-            elif time_limit >= 5.0:
                 adaptive_depth = 5
+            elif time_limit >= 5.0:
+                adaptive_depth = 4
             elif time_limit >= 3.0:
                 adaptive_depth = 4
             elif time_limit >= 1.5:

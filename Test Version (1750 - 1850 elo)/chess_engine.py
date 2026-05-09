@@ -1362,7 +1362,17 @@ class ChessAI:
         self.history_table = {}
         self.max_mate_depth = 10
         self.rep_penalty = 150
+        self.time_limit = None
+        self.start_time = None
+        self.hard_limit = None
     
+    def is_time_up(self):
+        if self.time_limit is None:
+            return False
+        if self.start_time is None:
+            return False
+        return (time.time() - self.start_time) > self.time_limit
+
     def order_moves(self, moves, depth):
         def move_score(move):
             start, end = move
@@ -1403,6 +1413,9 @@ class ChessAI:
         return sorted(moves, key=move_score, reverse=True)
     
     def quiescence_search(self, alpha, beta, maximizing, depth_remaining=4, in_check=False):
+        if self.is_time_up():
+            return self.engine.evaluate_board(), None
+            
         if depth_remaining < -8:
             return self.engine.evaluate_board(), None
         
@@ -1447,6 +1460,8 @@ class ChessAI:
             
             if maximizing:
                 for move in all_moves[:20]:
+                    if self.is_time_up():
+                        break
                     if not self.engine.is_move_legal(move[0], move[1]):
                         continue
                     
@@ -1466,6 +1481,8 @@ class ChessAI:
                 return alpha, None
             else:
                 for move in all_moves[:20]:
+                    if self.is_time_up():
+                        break
                     if not self.engine.is_move_legal(move[0], move[1]):
                         continue
                     
@@ -1555,6 +1572,8 @@ class ChessAI:
             tactical_moves = tactical_moves[:15]
         
         for start, end, move_type in tactical_moves:
+            if self.is_time_up():
+                break
             if not self.engine.is_move_legal(start, end):
                 continue
             
@@ -1582,6 +1601,9 @@ class ChessAI:
         return alpha if maximizing else beta, None
     
     def minimax(self, depth, alpha, beta, maximizing):
+        if self.is_time_up():
+            return (0, None) if maximizing else (0, None)
+        
         self.nodes_searched += 1
         
         board_hash = self.engine.get_board_hash()
@@ -1627,6 +1649,9 @@ class ChessAI:
         if maximizing:
             max_eval = -math.inf
             for i, move in enumerate(moves):
+                if self.is_time_up():
+                    break
+                    
                 state = self.engine.get_state()
                 self.engine.make_move(move[0], move[1], record_history=False)
                 
@@ -1673,6 +1698,9 @@ class ChessAI:
         else:
             min_eval = math.inf
             for i, move in enumerate(moves):
+                if self.is_time_up():
+                    break
+                    
                 state = self.engine.get_state()
                 self.engine.make_move(move[0], move[1], record_history=False)
                 
@@ -2092,7 +2120,7 @@ class ChessAI:
         
         start_time = time.time()
         best_move = None
-        TIME_LIMIT = 5.0
+        TIME_LIMIT = self.time_limit if self.time_limit is not None else 5.0
         best_moves_same_score = []
         
         search_depth = self.depth
@@ -2101,6 +2129,9 @@ class ChessAI:
         best_minimax_score = -math.inf if our_color == 'white' else math.inf
         
         for depth in range(1, search_depth + 1):
+            if self.is_time_up():
+                break
+            
             elapsed = time.time() - start_time
             if elapsed > TIME_LIMIT * 0.7:
                 break
@@ -2152,6 +2183,8 @@ class ChessAI:
                     best_move = move
                     best_minimax_score = score
             
+            if self.is_time_up():
+                break
             if time.time() - start_time > TIME_LIMIT * 0.9:
                 break
         
@@ -2240,4 +2273,6 @@ class ChessAI:
             move_key = (best_move[0], best_move[1])
             self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth ** 2
         
+        self.time_limit = None
+        self.start_time = None
         return best_move
