@@ -111,6 +111,12 @@ KING_ACTIVITY_TABLE = [
 
 transposition_table = {}
 
+PIECE_TO_INDEX = {
+    'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4, 'K': 5,
+    'p': 6, 'n': 7, 'b': 8, 'r': 9, 'q': 10, 'k': 11
+}
+INDEX_TO_PIECE = {v: k for k, v in PIECE_TO_INDEX.items()}
+
 
 class ChessEngine:
     def __init__(self):
@@ -131,7 +137,38 @@ class ChessEngine:
         }
     
         self.tactical_cache = {}
+        self.bitboards = [0] * 12
+        self.occupied_white = 0
+        self.occupied_black = 0
+        self.occupied_all = 0
+        self._sync_bitboards_from_board()
         
+    def _sync_bitboards_from_board(self):
+        self.bitboards = [0] * 12
+        self.occupied_white = 0
+        self.occupied_black = 0
+        for row in range(8):
+            for col in range(8):
+                piece = self.board[row][col]
+                if piece == '.':
+                    continue
+                sq = row * 8 + col
+                bit = 1 << sq
+                idx = PIECE_TO_INDEX[piece]
+                self.bitboards[idx] |= bit
+                if piece.isupper():
+                    self.occupied_white |= bit
+                else:
+                    self.occupied_black |= bit
+        self.occupied_all = self.occupied_white | self.occupied_black
+
+    def _iter_bits(self, bb):
+        while bb:
+            lsb = bb & -bb
+            sq = lsb.bit_length() - 1
+            yield sq
+            bb ^= lsb
+
     def get_initial_board(self):
         return [
             ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -149,45 +186,41 @@ class ChessEngine:
                 [row[:] for row in self.board],
                 dict(self.castling_rights),
                 self.halfmove_clock,
-                self.fullmove_number)
+                self.fullmove_number,
+                tuple(self.bitboards),
+                self.occupied_white,
+                self.occupied_black,
+                self.occupied_all)
     
     def set_state(self, state):
-        if len(state) == 7:
-            self.turn, self.en_passant_target, self.last_move, self.board, self.castling_rights, self.halfmove_clock, self.fullmove_number = state
+        if len(state) >= 7:
+            self.turn, self.en_passant_target, self.last_move, self.board, self.castling_rights, self.halfmove_clock, self.fullmove_number = state[:7]
+            if len(state) >= 11:
+                self.bitboards = list(state[7])
+                self.occupied_white = state[8]
+                self.occupied_black = state[9]
+                self.occupied_all = state[10]
+            else:
+                self._sync_bitboards_from_board()
         elif len(state) == 5:
             self.turn, self.en_passant_target, self.last_move, self.board, self.castling_rights = state
+            self._sync_bitboards_from_board()
         else:
             self.turn, self.en_passant_target, self.last_move, self.board = state
+            self._sync_bitboards_from_board()
     
     def get_board_hash(self):
-        board_tuple = tuple(tuple(row) for row in self.board)
-        return hash((board_tuple, self.turn, self.en_passant_target, 
-                     tuple(self.castling_rights.items())))
+        return hash((tuple(self.bitboards), self.turn, self.en_passant_target, tuple(self.castling_rights.items())))
     
     def get_material_value(self):
-        white = 0
-        black = 0
-        piece_values = {'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9}
-        for row in range(8):
-            for col in range(8):
-                piece = self.board[row][col]
-                if piece != '.':
-                    value = piece_values.get(piece.lower(), 0)
-                    if piece.isupper():
-                        white += value
-                    else:
-                        black += value
+        vals = [1,3,3,5,9,0,1,3,3,5,9,0]
+        white = sum((self.bitboards[i].bit_count() * vals[i]) for i in range(6))
+        black = sum((self.bitboards[i].bit_count() * vals[i]) for i in range(6, 12))
         return white, black
     
     def get_total_material(self):
-        total = 0
-        piece_values = {'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9}
-        for row in range(8):
-            for col in range(8):
-                piece = self.board[row][col]
-                if piece != '.' and piece.lower() != 'k':
-                    total += piece_values.get(piece.lower(), 0)
-        return total
+        vals = [1,3,3,5,9,0,1,3,3,5,9,0]
+        return sum(self.bitboards[i].bit_count() * vals[i] for i in range(12))
     
     def square_to_coord(self, square):
         col_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': 7}
@@ -209,12 +242,12 @@ class ChessEngine:
             row, col = self.square_to_coord(square)
         else:
             row, col = square
-        for r in range(8):
-            for c in range(8):
-                piece = self.board[r][c]
-                if piece != '.' and self.get_piece_color(piece) == color:
-                    if self.can_piece_attack(r, c, row, col):
-                        return True
+        indices = range(0, 6) if color == 'white' else range(6, 12)
+        for idx in indices:
+            for sq in self._iter_bits(self.bitboards[idx]):
+                r, c = divmod(sq, 8)
+                if self.can_piece_attack(r, c, row, col):
+                    return True
         return False
     
     def is_square_defended(self, square, color):
@@ -993,6 +1026,7 @@ class ChessEngine:
             self.fullmove_number += 1
         
         self.turn = 'black' if self.turn == 'white' else 'white'
+        self._sync_bitboards_from_board()
         
         if record_history:
             board_hash = self.get_board_hash()
