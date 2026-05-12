@@ -2,6 +2,7 @@ import sys
 import math
 import time
 from chess_engine import ChessEngine, ChessAI
+from chess_engine.constants import transposition_table
 
 
 class UCIEngine:
