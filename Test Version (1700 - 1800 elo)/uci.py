@@ -275,6 +275,10 @@ class UCIEngine:
             else:
                 adaptive_depth = 1
         
+        if remaining_time is not None and remaining_time <= 10.0:
+            adaptive_depth = min(adaptive_depth, 3)
+            print(f"info string Low time ({remaining_time:.1f}s), capping depth to 3")
+        
         self.ai.depth = adaptive_depth
         self.max_time = time_limit
         self.start_time = time.time()
