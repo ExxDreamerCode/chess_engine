@@ -466,6 +466,11 @@ class ChessEngine:
         return len(self.get_all_legal_moves()) == 0
 
     def is_threefold_repetition(self):
+        white_score, black_score = self.get_material_value()
+        material_adv = abs(white_score - black_score)
+        eval_adv = abs(self.evaluate_board())
+        if material_adv > 100 or eval_adv > 100:
+            return False
         board_hash = self.get_board_hash()
         return self.position_history.get(board_hash, 0) >= 3
 
@@ -508,20 +513,24 @@ class ChessEngine:
                     return True
         return False
 
-    def is_draw(self, advantage_tolerance=500):
+    def is_draw(self, advantage_tolerance=100):
         if self.is_stalemate():
             return True, "stalemate"
         if self.is_fifty_move_rule():
             return True, "fifty_moves"
         if self.is_insufficient_material():
             return True, "insufficient_material"
+        
+        white_score, black_score = self.get_material_value()
+        total_score = white_score - black_score
+        advantage = abs(total_score)
+        
         if self.is_threefold_repetition():
-            eval_score = self.evaluate_board()
-            advantage = abs(eval_score)
             if advantage < advantage_tolerance:
                 return True, "threefold_repetition"
             else:
                 return False, None
+        
         return False, None
 
     def evaluate_board_quick(self):

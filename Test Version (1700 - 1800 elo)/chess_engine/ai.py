@@ -14,7 +14,7 @@ class ChessAI:
         self.killer_moves = [[None, None] for _ in range(64)]
         self.history_table = {}
         self.max_mate_depth = 10
-        self.rep_penalty = 150
+        self.rep_penalty = 10000
         self.time_limit = None
         self.start_time = None
         self.hard_limit = None
@@ -51,9 +51,10 @@ class ChessAI:
                 white_material, black_material = self.engine.get_material_value()
                 total_material = white_material + black_material
                 if total_material < 20:
+                    score += 2000
                     if (self.engine.turn == 'white' and end[0] < start[0]) or \
                        (self.engine.turn == 'black' and end[0] > start[0]):
-                        score += 500
+                        score += 3000
             return score
         return sorted(moves, key=move_score, reverse=True)
 
@@ -248,10 +249,12 @@ class ChessAI:
         moves = self.order_moves(moves, depth)
         best_move = moves[0] if moves else None
         original_alpha = alpha
-        current_advantage = self.engine.evaluate_board()
+        white_score, black_score = self.engine.get_material_value()
+        current_advantage = white_score - black_score
         if self.engine.turn == 'black':
             current_advantage = -current_advantage
-        REPETITION_PENALTY_THRESHOLD = 300
+        
+        REPETITION_PENALTY_THRESHOLD = 50
         if maximizing:
             max_eval = -math.inf
             for i, move in enumerate(moves):
@@ -509,9 +512,9 @@ class ChessAI:
         return penalty
 
     def should_avoid_repetition(self, advantage):
-        if advantage > 2500:
+        if advantage > 250:
             return False
-        if advantage > 1000:
+        if advantage > 100:
             return random.random() < 0.3
         return True
 
@@ -705,7 +708,8 @@ class ChessAI:
             else:
                 return None
         if best_move:
-            current_advantage = self.engine.evaluate_board()
+            white_score, black_score = self.engine.get_material_value()
+            current_advantage = white_score - black_score
             if self.engine.turn == 'black':
                 current_advantage = -current_advantage
             state = self.engine.get_state()
@@ -713,7 +717,7 @@ class ChessAI:
             leads_to_repetition = self.engine.position_history.get(
                 self.engine.get_board_hash(), 0) >= 1
             self.engine.set_state(state)
-            SHOULD_AVOID_REPETITION_THRESHOLD = 300
+            SHOULD_AVOID_REPETITION_THRESHOLD = 200
             if leads_to_repetition and current_advantage >= SHOULD_AVOID_REPETITION_THRESHOLD:
                 found_alternative = False
                 if len(best_moves_same_score) > 1:
