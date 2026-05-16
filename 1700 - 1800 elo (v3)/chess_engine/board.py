@@ -37,15 +37,24 @@ class ChessEngine:
                 [row[:] for row in self.board],
                 dict(self.castling_rights),
                 self.halfmove_clock,
-                self.fullmove_number)
+                self.fullmove_number,
+                dict(self.position_history))
 
     def set_state(self, state):
-        if len(state) == 7:
+        if len(state) == 8:
+            (self.turn, self.en_passant_target, self.last_move, 
+             self.board, self.castling_rights, 
+             self.halfmove_clock, self.fullmove_number,
+             self.position_history) = state
+        elif len(state) == 7:
             self.turn, self.en_passant_target, self.last_move, self.board, self.castling_rights, self.halfmove_clock, self.fullmove_number = state
+            self.position_history = {}
         elif len(state) == 5:
             self.turn, self.en_passant_target, self.last_move, self.board, self.castling_rights = state
+            self.position_history = {}
         else:
             self.turn, self.en_passant_target, self.last_move, self.board = state
+            self.position_history = {}
 
     def get_board_hash(self):
         board_tuple = tuple(tuple(row) for row in self.board)

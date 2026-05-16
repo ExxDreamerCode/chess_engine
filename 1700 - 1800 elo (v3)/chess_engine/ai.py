@@ -261,7 +261,7 @@ class ChessAI:
                 if self.is_time_up():
                     break
                 state = self.engine.get_state()
-                self.engine.make_move(move[0], move[1], record_history=False)
+                self.engine.make_move(move[0], move[1], record_history=True)
                 eval_penalty = 0
                 if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
                     if current_advantage >= REPETITION_PENALTY_THRESHOLD:
@@ -302,7 +302,7 @@ class ChessAI:
                 if self.is_time_up():
                     break
                 state = self.engine.get_state()
-                self.engine.make_move(move[0], move[1], record_history=False)
+                self.engine.make_move(move[0], move[1], record_history=True)
                 eval_penalty = 0
                 if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
                     if current_advantage >= REPETITION_PENALTY_THRESHOLD:
@@ -712,11 +712,10 @@ class ChessAI:
             current_advantage = white_score - black_score
             if self.engine.turn == 'black':
                 current_advantage = -current_advantage
-            state = self.engine.get_state()
-            self.engine.make_move(best_move[0], best_move[1], record_history=False)
-            leads_to_repetition = self.engine.position_history.get(
-                self.engine.get_board_hash(), 0) >= 1
-            self.engine.set_state(state)
+            temp_state = self.engine.get_state()
+            self.engine.make_move(best_move[0], best_move[1], record_history=True)
+            leads_to_repetition = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+            self.engine.set_state(temp_state)
             SHOULD_AVOID_REPETITION_THRESHOLD = 200
             if leads_to_repetition and current_advantage >= SHOULD_AVOID_REPETITION_THRESHOLD:
                 found_alternative = False
@@ -724,12 +723,11 @@ class ChessAI:
                     for move in best_moves_same_score:
                         if move == best_move:
                             continue
-                        state = self.engine.get_state()
-                        self.engine.make_move(move[0], move[1], record_history=False)
-                        is_rep = self.engine.position_history.get(
-                            self.engine.get_board_hash(), 0) >= 1
-                        self.engine.set_state(state)
-                        if not is_rep:
+                        self.engine.set_state(temp_state)
+                        self.engine.make_move(move[0], move[1], record_history=True)
+                        is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                        self.engine.set_state(temp_state)
+                        if not is_rep and self.is_move_safe(move):
                             best_move = move
                             found_alternative = True
                             break
@@ -737,16 +735,17 @@ class ChessAI:
                     for move in all_legal_moves:
                         if move == best_move:
                             continue
-                        state = self.engine.get_state()
-                        self.engine.make_move(move[0], move[1], record_history=False)
-                        if self.engine.is_in_check(self.engine.turn):
-                            self.engine.set_state(state)
-                            continue
-                        is_rep = self.engine.position_history.get(
-                            self.engine.get_board_hash(), 0) >= 1
-                        self.engine.set_state(state)
-                        if not is_rep:
-                            if self.is_move_safe(move):
+                        self.engine.set_state(temp_state)
+                        self.engine.make_move(move[0], move[1], record_history=True)
+                        is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                        self.engine.set_state(temp_state)
+                        if not is_rep and self.is_move_safe(move):
+                            self.engine.set_state(temp_state)
+                            self.engine.make_move(move[0], move[1], record_history=False)
+                            approx_score = self.engine.evaluate_board_quick()
+                            self.engine.set_state(temp_state)
+                            if (self.engine.turn == 'white' and approx_score >= current_advantage - 150) or \
+                               (self.engine.turn == 'black' and approx_score <= current_advantage + 150):
                                 best_move = move
                                 found_alternative = True
                                 break
