@@ -707,50 +707,66 @@ class ChessAI:
                 best_move = all_legal_moves[0]
             else:
                 return None
-        if best_move:
-            white_score, black_score = self.engine.get_material_value()
-            current_advantage = white_score - black_score
-            if self.engine.turn == 'black':
-                current_advantage = -current_advantage
-            temp_state = self.engine.get_state()
-            self.engine.make_move(best_move[0], best_move[1], record_history=True)
-            leads_to_repetition = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
-            self.engine.set_state(temp_state)
-            SHOULD_AVOID_REPETITION_THRESHOLD = 200
-            if leads_to_repetition and current_advantage >= SHOULD_AVOID_REPETITION_THRESHOLD:
-                found_alternative = False
-                if len(best_moves_same_score) > 1:
-                    for move in best_moves_same_score:
-                        if move == best_move:
-                            continue
+        
+        temp_state = self.engine.get_state()
+        self.engine.make_move(best_move[0], best_move[1], record_history=True)
+        leads_to_repetition = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+        self.engine.set_state(temp_state)
+        
+        if leads_to_repetition:
+            found_alternative = False
+            if len(best_moves_same_score) > 1:
+                for move in best_moves_same_score:
+                    if move == best_move:
+                        continue
+                    self.engine.set_state(temp_state)
+                    self.engine.make_move(move[0], move[1], record_history=True)
+                    is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                    self.engine.set_state(temp_state)
+                    if not is_rep and self.is_move_safe(move):
+                        best_move = move
+                        found_alternative = True
+                        break
+            
+            if not found_alternative:
+                for move in all_legal_moves:
+                    if move == best_move:
+                        continue
+                    self.engine.set_state(temp_state)
+                    self.engine.make_move(move[0], move[1], record_history=True)
+                    is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                    self.engine.set_state(temp_state)
+                    if not is_rep and self.is_move_safe(move):
                         self.engine.set_state(temp_state)
-                        self.engine.make_move(move[0], move[1], record_history=True)
-                        is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                        self.engine.make_move(move[0], move[1], record_history=False)
+                        approx_score = self.engine.evaluate_board_quick()
                         self.engine.set_state(temp_state)
-                        if not is_rep and self.is_move_safe(move):
+                        
+                        if (self.engine.turn == 'white' and approx_score >= material_advantage - 150) or \
+                           (self.engine.turn == 'black' and approx_score <= material_advantage + 150):
                             best_move = move
                             found_alternative = True
                             break
-                if not found_alternative:
-                    for move in all_legal_moves:
-                        if move == best_move:
-                            continue
-                        self.engine.set_state(temp_state)
-                        self.engine.make_move(move[0], move[1], record_history=True)
-                        is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
-                        self.engine.set_state(temp_state)
-                        if not is_rep and self.is_move_safe(move):
-                            self.engine.set_state(temp_state)
-                            self.engine.make_move(move[0], move[1], record_history=False)
-                            approx_score = self.engine.evaluate_board_quick()
-                            self.engine.set_state(temp_state)
-                            if (self.engine.turn == 'white' and approx_score >= current_advantage - 150) or \
-                               (self.engine.turn == 'black' and approx_score <= current_advantage + 150):
-                                best_move = move
-                                found_alternative = True
-                                break
-            move_key = (best_move[0], best_move[1])
-            self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth ** 2
+            
+            if found_alternative:
+                move_key = (best_move[0], best_move[1])
+                self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth
+            else:
+                for move in all_legal_moves:
+                    if move == best_move:
+                        continue
+                    self.engine.set_state(temp_state)
+                    self.engine.make_move(move[0], move[1], record_history=True)
+                    is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                    self.engine.set_state(temp_state)
+                    if not is_rep:
+                        best_move = move
+                        found_alternative = True
+                        break
+        
+        move_key = (best_move[0], best_move[1])
+        self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth ** 2
+        
         self.time_limit = None
         self.start_time = None
         return best_move
