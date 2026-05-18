@@ -71,6 +71,8 @@ class ChessEngine:
         self.turn = 'white'
         self.en_passant_target = None
         self.last_move = None
+        self.move_history = []
+        self.position_history = {}
         
     def get_initial_board(self):
         return [
@@ -85,12 +87,10 @@ class ChessEngine:
         ]
     
     def get_state(self):
-        """Быстрое сохранение состояния для минимакса"""
         return (self.turn, self.en_passant_target, self.last_move, 
                 [row[:] for row in self.board])
     
     def set_state(self, state):
-        """Быстрое восстановление состояния"""
         self.turn, self.en_passant_target, self.last_move, self.board = state
     
     def get_material_value(self):
@@ -395,13 +395,11 @@ class ChessEngine:
         return all_moves
     
     def make_move(self, start, end, promotion='q', record_history=True):
-        """Ход с опциональной записью в историю"""
         start_row, start_col = start
         end_row, end_col = end
         piece = self.board[start_row][start_col]
         captured = self.board[end_row][end_col]
         
-        # Записываем в историю только реальные ходы (не поисковые)
         if record_history:
             self.move_history.append({
                 'start': start,
@@ -470,8 +468,10 @@ class ChessEngine:
             return False
         return len(self.get_all_legal_moves()) == 0
     
+    def get_board_hash(self):
+        return ''.join(''.join(row) for row in self.board)
+    
     def evaluate_board(self):
-        """Только материальная оценка — без позиционных бонусов"""
         piece_values = {
             'P': 10, 'N': 30, 'B': 30, 'R': 50, 'Q': 90, 'K': 900,
             'p': -10, 'n': -30, 'b': -30, 'r': -50, 'q': -90, 'k': -900
