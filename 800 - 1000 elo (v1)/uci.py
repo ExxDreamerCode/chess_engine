@@ -17,6 +17,8 @@ class UCIEngine:
         self.min_depth_limit = 2
         self.move_time_limit = 5.0
         self.max_mate_depth = 10
+
+        self.transposition_table = {}
         
     def run(self):
         self.send_id()
