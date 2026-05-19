@@ -1,5 +1,4 @@
 import math
-import random
 import time
 from .constants import PIECE_VALUES, transposition_table
 from .board import ChessEngine
@@ -14,7 +13,7 @@ class ChessAI:
         self.killer_moves = [[None, None] for _ in range(64)]
         self.history_table = {}
         self.max_mate_depth = 10
-        self.rep_penalty = 300
+        self.rep_penalty = 5000
         self.time_limit = None
         self.start_time = None
         self.hard_limit = None
@@ -194,9 +193,15 @@ class ChessAI:
         board_hash = self.engine.get_board_hash()
         if board_hash in transposition_table:
             tt_entry = transposition_table[board_hash]
-            if tt_entry['depth'] >= depth:
+            if tt_entry['depth'] >= depth and tt_entry['move'] is not None:
                 if tt_entry['flag'] == 'exact':
-                    return tt_entry['value'], tt_entry['move']
+                    tt_move = tt_entry['move']
+                    temp_state = self.engine.get_state()
+                    self.engine.make_move(tt_move[0], tt_move[1], record_history=True)
+                    is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                    self.engine.set_state(temp_state)
+                    if not is_rep:
+                        return tt_entry['value'], tt_entry['move']
                 elif tt_entry['flag'] == 'alpha' and tt_entry['value'] <= alpha:
                     return tt_entry['value'], tt_entry['move']
                 elif tt_entry['flag'] == 'beta' and tt_entry['value'] >= beta:
@@ -219,12 +224,7 @@ class ChessAI:
         moves = self.order_moves(moves, depth)
         best_move = moves[0] if moves else None
         original_alpha = alpha
-        white_score, black_score = self.engine.get_material_value()
-        current_advantage = white_score - black_score
-        if self.engine.turn == 'black':
-            current_advantage = -current_advantage
         
-        REPETITION_PENALTY_THRESHOLD = 50
         if maximizing:
             max_eval = -math.inf
             for i, move in enumerate(moves):
@@ -233,9 +233,8 @@ class ChessAI:
                 state = self.engine.get_state()
                 self.engine.make_move(move[0], move[1], record_history=True)
                 eval_penalty = 0
-                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
-                    if current_advantage >= REPETITION_PENALTY_THRESHOLD:
-                        eval_penalty = self.rep_penalty
+                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
+                    eval_penalty = self.rep_penalty
                 if i >= 4 and depth >= 3:
                     eval_result, _ = self.minimax(depth - 2, alpha, beta, False)
                     eval_result -= eval_penalty
@@ -274,9 +273,8 @@ class ChessAI:
                 state = self.engine.get_state()
                 self.engine.make_move(move[0], move[1], record_history=True)
                 eval_penalty = 0
-                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
-                    if current_advantage >= REPETITION_PENALTY_THRESHOLD:
-                        eval_penalty = self.rep_penalty
+                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
+                    eval_penalty = self.rep_penalty
                 if i >= 4 and depth >= 3:
                     eval_result, _ = self.minimax(depth - 2, alpha, beta, True)
                     eval_result += eval_penalty
@@ -481,13 +479,6 @@ class ChessAI:
         self.engine.set_state(state)
         return penalty
 
-    def should_avoid_repetition(self, advantage):
-        if advantage > 250:
-            return False
-        if advantage > 100:
-            return random.random() < 0.3
-        return True
-
     def is_move_blunder(self, move):
         start, end = move
         piece = self.engine.board[start[0]][start[1]]
@@ -607,7 +598,7 @@ class ChessAI:
         start_time = time.time()
         best_move = None
         TIME_LIMIT = self.time_limit if self.time_limit is not None else 5.0
-        best_moves_same_score = []
+        best_moves_per_depth = {}
         search_depth = self.depth
         best_minimax_move = None
         best_minimax_score = -math.inf if our_color == 'white' else math.inf
@@ -618,6 +609,7 @@ class ChessAI:
             if elapsed > TIME_LIMIT * 0.7:
                 break
             self.nodes_searched = 0
+            best_moves_same_score = []
             if self.engine.turn == 'white':
                 best_score = -math.inf
                 _, move = self.minimax(depth, -math.inf, math.inf, True)
@@ -652,10 +644,13 @@ class ChessAI:
                         best_moves_same_score.append(move)
                     best_move = move
                     best_minimax_score = score
+            best_moves_per_depth[depth] = best_moves_same_score
             if self.is_time_up():
                 break
             if time.time() - start_time > TIME_LIMIT * 0.9:
                 break
+        last_depth = max(best_moves_per_depth.keys()) if best_moves_per_depth else None
+        best_moves_same_score = best_moves_per_depth.get(last_depth, []) if last_depth is not None else []
         best_minimax_move = best_move
         if book_move_found and best_minimax_move:
             if our_color == 'white':
@@ -706,33 +701,16 @@ class ChessAI:
                     self.engine.make_move(move[0], move[1], record_history=True)
                     is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
                     self.engine.set_state(temp_state)
-                    if not is_rep and self.is_move_safe(move):
-                        self.engine.set_state(temp_state)
-                        self.engine.make_move(move[0], move[1], record_history=False)
-                        approx_score = self.engine.evaluate_board_quick()
-                        self.engine.set_state(temp_state)
-                        
-                        if (self.engine.turn == 'white' and approx_score >= material_advantage - 150) or \
-                           (self.engine.turn == 'black' and approx_score <= material_advantage + 150):
-                            best_move = move
-                            found_alternative = True
-                            break
+                    if not is_rep:
+                        best_move = move
+                        found_alternative = True
+                        break
             
             if found_alternative:
                 move_key = (best_move[0], best_move[1])
                 self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth
             else:
-                for move in all_legal_moves:
-                    if move == best_move:
-                        continue
-                    self.engine.set_state(temp_state)
-                    self.engine.make_move(move[0], move[1], record_history=True)
-                    is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
-                    self.engine.set_state(temp_state)
-                    if not is_rep:
-                        best_move = move
-                        found_alternative = True
-                        break
+                pass
         
         move_key = (best_move[0], best_move[1])
         self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth ** 2
