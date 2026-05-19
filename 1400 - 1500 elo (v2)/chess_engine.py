@@ -680,10 +680,6 @@ class ChessEngine:
         return len(self.get_all_legal_moves()) == 0
     
     def is_threefold_repetition(self):
-        white_score, black_score = self.get_material_value()
-        advantage = abs(white_score - black_score)
-        if advantage > 150:
-            return False
         board_hash = self.get_board_hash()
         return self.position_history.get(board_hash, 0) >= 3
     
@@ -1166,9 +1162,8 @@ class ChessAI:
                 self.engine.make_move(move[0], move[1], record_history=False)
                 
                 eval_penalty = 0
-                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
-                    if current_advantage >= REPETITION_PENALTY_THRESHOLD:
-                        eval_penalty = self.rep_penalty
+                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
+                    eval_penalty = self.rep_penalty
                 
                 if i >= 4 and depth >= 3:
                     eval_result, _ = self.minimax(depth - 2, alpha, beta, False)
@@ -1212,9 +1207,8 @@ class ChessAI:
                 self.engine.make_move(move[0], move[1], record_history=False)
                 
                 eval_penalty = 0
-                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
-                    if current_advantage >= REPETITION_PENALTY_THRESHOLD:
-                        eval_penalty = self.rep_penalty
+                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
+                    eval_penalty = self.rep_penalty
                 
                 if i >= 4 and depth >= 3:
                     eval_result, _ = self.minimax(depth - 2, alpha, beta, True)
@@ -1323,7 +1317,7 @@ class ChessAI:
                         progress = end[0]
                     total_score += progress * 50
                 
-                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
+                if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
                     total_score -= 500
                 
                 scored_moves.append((move, total_score))
@@ -1605,7 +1599,7 @@ class ChessAI:
                         continue
                     
                     rep_penalty = 0
-                    if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
+                    if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
                         rep_penalty = 500
                     
                     score = self.engine.evaluate_board_quick() - rep_penalty
@@ -1651,7 +1645,7 @@ class ChessAI:
                     self.engine.make_move(move[0], move[1], record_history=False)
                     
                     score = self.engine.evaluate_board()
-                    if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
+                    if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
                         score -= 200
                     
                     self.engine.set_state(state)
@@ -1673,7 +1667,7 @@ class ChessAI:
                     self.engine.make_move(move[0], move[1], record_history=False)
                     
                     score = self.engine.evaluate_board()
-                    if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 1:
+                    if self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2:
                         score += 200
                     
                     self.engine.set_state(state)
@@ -1724,13 +1718,11 @@ class ChessAI:
             self.engine.make_move(best_move[0], best_move[1], record_history=False)
             
             leads_to_repetition = self.engine.position_history.get(
-                self.engine.get_board_hash(), 0) >= 1
+                self.engine.get_board_hash(), 0) >= 2
             
             self.engine.set_state(state)
             
-            SHOULD_AVOID_REPETITION_THRESHOLD = 200
-            
-            if leads_to_repetition and current_advantage >= SHOULD_AVOID_REPETITION_THRESHOLD:
+            if leads_to_repetition:
                 found_alternative = False
                 
                 if len(best_moves_same_score) > 1:
@@ -1741,7 +1733,7 @@ class ChessAI:
                         self.engine.make_move(move[0], move[1], record_history=False)
                         
                         is_rep = self.engine.position_history.get(
-                            self.engine.get_board_hash(), 0) >= 1
+                            self.engine.get_board_hash(), 0) >= 2
                         
                         self.engine.set_state(state)
                         
@@ -1762,7 +1754,7 @@ class ChessAI:
                             continue
                         
                         is_rep = self.engine.position_history.get(
-                            self.engine.get_board_hash(), 0) >= 1
+                            self.engine.get_board_hash(), 0) >= 2
                         
                         self.engine.set_state(state)
                         

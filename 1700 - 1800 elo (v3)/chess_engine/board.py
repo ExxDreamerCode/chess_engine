@@ -475,11 +475,6 @@ class ChessEngine:
         return len(self.get_all_legal_moves()) == 0
 
     def is_threefold_repetition(self):
-        white_score, black_score = self.get_material_value()
-        material_adv = abs(white_score - black_score)
-        eval_adv = abs(self.evaluate_board())
-        if material_adv > 100 or eval_adv > 100:
-            return False
         board_hash = self.get_board_hash()
         return self.position_history.get(board_hash, 0) >= 3
 
