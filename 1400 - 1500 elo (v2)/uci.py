@@ -15,7 +15,7 @@ class UCIEngine:
         
         self.max_depth_limit = 7
         self.min_depth_limit = 2
-        self.move_time_limit = 5.0
+        self.move_time_limit = 10.0
         self.max_mate_depth = 10
         
     def run(self):

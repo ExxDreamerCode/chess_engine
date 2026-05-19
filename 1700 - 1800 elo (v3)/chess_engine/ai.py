@@ -14,7 +14,7 @@ class ChessAI:
         self.killer_moves = [[None, None] for _ in range(64)]
         self.history_table = {}
         self.max_mate_depth = 10
-        self.rep_penalty = 10000
+        self.rep_penalty = 300
         self.time_limit = None
         self.start_time = None
         self.hard_limit = None
@@ -80,16 +80,6 @@ class ChessAI:
                 if target != '.':
                     victim_values = {'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900}
                     score += victim_values.get(target.lower(), 0) * 10
-                if self.engine.is_move_check(start, end):
-                    score += 5000
-                piece = self.engine.board[start[0]][start[1]]
-                if piece.lower() == 'n':
-                    for r in range(8):
-                        for c in range(8):
-                            target_piece = self.engine.board[r][c]
-                            if target_piece != '.' and self.engine.get_piece_color(target_piece) != self.engine.get_piece_color(piece):
-                                if self.engine.can_piece_attack_on_board(start[0], start[1], r, c, self.engine.board):
-                                    score += 300
                 move_key = (start, end)
                 if move_key in self.history_table:
                     score += min(self.history_table[move_key], 500)
@@ -150,22 +140,6 @@ class ChessAI:
                         target = self.engine.board[move[0]][move[1]]
                         if target != '.' and self.engine.get_piece_color(target) != self.engine.turn:
                             tactical_moves.append(((row, col), move, 'capture'))
-                        elif self.engine.is_move_check((row, col), move):
-                            tactical_moves.append(((row, col), move, 'check'))
-                        elif piece.lower() == 'n':
-                            fork_potential = 0
-                            knight_moves = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
-                                           (1, -2), (1, 2), (2, -1), (2, 1)]
-                            for dr, dc in knight_moves:
-                                new_r, new_c = move[0] + dr, move[1] + dc
-                                if 0 <= new_r < 8 and 0 <= new_c < 8:
-                                    target_piece = self.engine.board[new_r][new_c]
-                                    if target_piece != '.' and self.engine.get_piece_color(target_piece) != self.engine.get_piece_color(piece):
-                                        target_value = abs(PIECE_VALUES.get(target_piece, 0))
-                                        if target_value >= 300:
-                                            fork_potential += target_value
-                            if fork_potential >= 600:
-                                tactical_moves.append(((row, col), move, 'fork'))
         if not tactical_moves:
             return stand_pat, None
 
@@ -178,10 +152,6 @@ class ChessAI:
                 victim_values = {'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900}
                 attacker_values = {'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900}
                 score = victim_values.get(victim, 0) - attacker_values.get(attacker, 0) // 10
-            elif move_type == 'check':
-                score = 500
-            elif move_type == 'fork':
-                score = 800
             move_key = (start, end)
             if move_key in self.history_table:
                 score += min(self.history_table[move_key], 500)

@@ -14,9 +14,9 @@ class UCIEngine:
         self.start_time = 0
         self.max_time = 0
         
-        self.max_depth_limit = 6
+        self.max_depth_limit = 7
         self.min_depth_limit = 2
-        self.move_time_limit = 5.0
+        self.move_time_limit = 10.0
         self.max_mate_depth = 10
         
     def run(self):
@@ -105,15 +105,15 @@ class UCIEngine:
         time_per_move = min(time_per_move, self.move_time_limit)
         
         if time_per_move >= 5.0:
-            base_depth = self.max_depth_limit
+            base_depth = self.max_depth_limit + 1
         elif time_per_move >= 3.0:
-            base_depth = self.max_depth_limit - 1
+            base_depth = self.max_depth_limit
         elif time_per_move >= 2.0:
-            base_depth = min(self.max_depth_limit - 2, 6)
+            base_depth = min(self.max_depth_limit - 1, 6)
         elif time_per_move >= 1.0:
-            base_depth = min(self.max_depth_limit - 3, 5)
+            base_depth = min(self.max_depth_limit - 2, 5)
         elif time_per_move >= 0.5:
-            base_depth = min(self.max_depth_limit - 4, 4)
+            base_depth = min(self.max_depth_limit - 3, 4)
         else:
             base_depth = self.min_depth_limit
         
@@ -262,7 +262,9 @@ class UCIEngine:
         if depth_param is not None:
             adaptive_depth = min(depth_param, 8)
         else:
-            if time_limit >= 8.0:
+            if time_limit >= 20.0:
+                adaptive_depth = 6
+            elif time_limit >= 8.0:
                 adaptive_depth = 5
             elif time_limit >= 5.0:
                 adaptive_depth = 4
