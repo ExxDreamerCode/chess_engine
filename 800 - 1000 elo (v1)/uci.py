@@ -1,7 +1,7 @@
 import sys
 import math
 import time
-from chess_engine import ChessEngine, ChessAI
+from ChessEngine import ChessEngine, ChessAI
 
 
 class UCIEngine:
@@ -53,7 +53,7 @@ class UCIEngine:
                 sys.stderr.flush()
                 
     def send_id(self):
-        print(f"id name DreamerExx_ChessEngine v2")
+        print(f"id name DreamerExx_ChessEngine v1")
         print(f"id author Dreamer_Exx")
         print("uciok")
         sys.stdout.flush()
