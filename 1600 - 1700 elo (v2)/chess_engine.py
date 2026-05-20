@@ -1722,49 +1722,49 @@ class ChessAI:
             
             self.engine.set_state(state)
             
-            if leads_to_repetition:
-                found_alternative = False
-                
-                if len(best_moves_same_score) > 1:
-                    for move in best_moves_same_score:
-                        if move == best_move:
-                            continue
-                        state = self.engine.get_state()
-                        self.engine.make_move(move[0], move[1], record_history=False)
-                        
-                        is_rep = self.engine.position_history.get(
-                            self.engine.get_board_hash(), 0) >= 2
-                        
-                        self.engine.set_state(state)
-                        
-                        if not is_rep:
-                            best_move = move
-                            found_alternative = True
-                            break
-                
-                if not found_alternative:
-                    for move in all_legal_moves:
-                        if move == best_move:
-                            continue
-                        state = self.engine.get_state()
-                        self.engine.make_move(move[0], move[1], record_history=False)
-                        
-                        if self.engine.is_in_check(self.engine.turn):
-                            self.engine.set_state(state)
-                            continue
-                        
-                        is_rep = self.engine.position_history.get(
-                            self.engine.get_board_hash(), 0) >= 2
-                        
-                        self.engine.set_state(state)
-                        
-                        if not is_rep:
-                            if self.is_move_safe(move):
-                                best_move = move
-                                found_alternative = True
-                                break
+        temp_state = self.engine.get_state()
+        self.engine.make_move(best_move[0], best_move[1], record_history=True)
+        leads_to_repetition = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+        self.engine.set_state(temp_state)
+        
+        if leads_to_repetition:
+            found_alternative = False
+            if len(best_moves_same_score) > 1:
+                for move in best_moves_same_score:
+                    if move == best_move:
+                        continue
+                    self.engine.set_state(temp_state)
+                    self.engine.make_move(move[0], move[1], record_history=True)
+                    is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                    self.engine.set_state(temp_state)
+                    if not is_rep and self.is_move_safe(move):
+                        best_move = move
+                        found_alternative = True
+                        break
             
-            move_key = (best_move[0], best_move[1])
+            if not found_alternative:
+                for move in all_legal_moves:
+                    if move == best_move:
+                        continue
+                    self.engine.set_state(temp_state)
+                    self.engine.make_move(move[0], move[1], record_history=True)
+                    is_rep = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                    self.engine.set_state(temp_state)
+                    if not is_rep:
+                        best_move = move
+                        found_alternative = True
+                        break
+            
+            if found_alternative:
+                move_key = (best_move[0], best_move[1])
+                self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth
+        
+        move_key = (best_move[0], best_move[1])
+        if leads_to_repetition and not found_alternative:
+            self.history_table[move_key] = self.history_table.get(move_key, 0) + 1
+        else:
             self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth ** 2
         
+        self.time_limit = None
+        self.start_time = None
         return best_move
