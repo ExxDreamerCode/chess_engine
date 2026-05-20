@@ -33,7 +33,7 @@
 Запустите файл gui.py (Должна быть установленна библиотека PyGame и сам Python)
 
 2. UCI версия (Для Arena, Cute Chess):  
-Выберите файл start.bat в вашем интерфейсе как движок (Должен быть установлен Python)
+Скачайте и запустите через ваш интерфейс [файл](https://github.com/ExxDreamerCode/chess_engine/releases/tag/engineV2) 
 
 ## 📊 Рейтинг
 
