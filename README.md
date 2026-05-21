@@ -1,8 +1,8 @@
 <div align="center">
 
-# ♟️ Chess Engine with GUI
+# ♟️ DreamerExx Chess Engine
 
-### Шахматный движок с графическим интерфейсом, ИИ и дебютной книгой
+### Шахматный движок с графическим интерфейсом, ИИ и дебютной книгой - "DreamerExx"
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.5.0-green.svg)](https://www.pygame.org/)
