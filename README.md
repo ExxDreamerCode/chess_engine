@@ -40,7 +40,16 @@
 Побеждает Stockfish 13, Deep Rybka, Houdini (Все с ограничением 1700 эло) в 46,7% очков из 15 партий
 *(V2 версия движка)*
 
-[Смотреть пример турнира](sample_game.pgn)
+[Смотреть пример турнира](sample_game.pgn)  
+
+## 🤖 Lichess Bots
+
+| Версия | Lichess | Рейтинг (пуля) | Статус |
+|--------|---------|----------------|--------|
+| **V2** | [@DreamerExx_V2](https://lichess.org/@/DreamerExx_V2) | **1712** | 🔥 Активен |
+| **V1** | [@DreamerExx_V1](https://lichess.org/@/DreamerExx_V1) | ~600 | 🦴 Иногда |
+
+> *"V2 стабильно обыгрывает Maia 1, Bernstein-4ply, и даже Maia 9."*
 
 ## 🎯 Технологии поиска
 

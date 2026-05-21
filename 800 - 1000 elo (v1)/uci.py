@@ -15,10 +15,8 @@ class UCIEngine:
         
         self.max_depth_limit = 7
         self.min_depth_limit = 2
-        self.move_time_limit = 5.0
+        self.move_time_limit = 10.0
         self.max_mate_depth = 10
-
-        self.transposition_table = {}
         
     def run(self):
         self.send_id()
@@ -263,7 +261,9 @@ class UCIEngine:
         if depth_param is not None:
             adaptive_depth = min(depth_param, 8)
         else:
-            if time_limit >= 8.0:
+            if time_limit >= 25.0:
+                adaptive_depth = 7
+            elif time_limit >= 8.0:
                 adaptive_depth = 6
             elif time_limit >= 5.0:
                 adaptive_depth = 5
