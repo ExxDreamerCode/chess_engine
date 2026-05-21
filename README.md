@@ -44,10 +44,10 @@
 
 ## 🤖 Lichess Bots
 
-| Версия | Lichess | Рейтинг (пуля) | Статус |
-|--------|---------|----------------|--------|
-| **V2** | [@DreamerExx_V2](https://lichess.org/@/DreamerExx_V2) | **1712** | 🔥 Активен |
-| **V1** | [@DreamerExx_V1](https://lichess.org/@/DreamerExx_V1) | ~600 | 🦴 Иногда |
+| Версия | Lichess | Пуля | Блиц | Рапид | Статус |
+|--------|---------|------|------|-------|--------|
+| **V2** | [@DreamerExx_V2](https://lichess.org/@/DreamerExx_V2) | **~1700** | **~1600** | **~1700*** | 🔥 Активен |
+| **V1** | [@DreamerExx_V1](https://lichess.org/@/DreamerExx_V1) | ~700 | ~700 | ~700 | 🦴 Исторический |
 
 > *"V2 стабильно обыгрывает Maia 1, Bernstein-4ply, и даже Maia 9."*
 
