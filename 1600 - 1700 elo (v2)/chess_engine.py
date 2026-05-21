@@ -1010,7 +1010,7 @@ class ChessAI:
         self.killer_moves = [[None, None] for _ in range(64)]
         self.history_table = {}
         self.max_mate_depth = 10
-        self.rep_penalty = 150
+        self.rep_penalty = 300
     
     def order_moves(self, moves, depth):
         def move_score(move):
@@ -1767,4 +1767,56 @@ class ChessAI:
             move_key = (best_move[0], best_move[1])
             self.history_table[move_key] = self.history_table.get(move_key, 0) + self.depth ** 2
         
+        white_mat, black_mat = self.engine.get_material_value()
+        total_advantage = white_mat - black_mat
+        if self.engine.turn == 'black':
+            total_advantage = -total_advantage
+        
+        if total_advantage > 300 and best_move:
+            temp_state = self.engine.get_state()
+            self.engine.make_move(best_move[0], best_move[1], record_history=False)
+            leads_to_repetition = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+            self.engine.set_state(temp_state)
+            
+            if leads_to_repetition:
+                found_alternative = False
+                for move in all_legal_moves:
+                    if move == best_move:
+                        continue
+                    
+                    temp_state2 = self.engine.get_state()
+                    self.engine.make_move(move[0], move[1], record_history=False)
+                    is_repetition = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                    self.engine.set_state(temp_state2)
+                    
+                    if not is_repetition and self.is_move_safe(move):
+                        state3 = self.engine.get_state()
+                        self.engine.make_move(move[0], move[1], record_history=False)
+                        new_white, new_black = self.engine.get_material_value()
+                        new_advantage = new_white - new_black
+                        if self.engine.turn == 'black':
+                            new_advantage = -new_advantage
+                        self.engine.set_state(state3)
+                        
+                        if new_advantage > total_advantage - 100:
+                            best_move = move
+                            found_alternative = True
+                            print(f"info string REPETITION AVOIDED: advantage={total_advantage}, found alternative {self.engine.coord_to_square(move[0][0], move[0][1])}{self.engine.coord_to_square(move[1][0], move[1][1])}")
+                            break
+                
+                if not found_alternative:
+                    if total_advantage > 500:
+                        for move in all_legal_moves:
+                            if move == best_move:
+                                continue
+                            temp_state3 = self.engine.get_state()
+                            self.engine.make_move(move[0], move[1], record_history=False)
+                            is_repetition = self.engine.position_history.get(self.engine.get_board_hash(), 0) >= 2
+                            self.engine.set_state(temp_state3)
+                            
+                            if not is_repetition:
+                                best_move = move
+                                print(f"info string DESPERATE AVOIDANCE: advantage={total_advantage}, picked any non-repeating move")
+                                break
+
         return best_move
