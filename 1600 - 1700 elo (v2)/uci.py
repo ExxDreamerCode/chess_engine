@@ -261,17 +261,15 @@ class UCIEngine:
         if depth_param is not None:
             adaptive_depth = min(depth_param, 8)
         else:
-            if time_limit >= 25.0:
-                adaptive_depth = 7
-            elif time_limit >= 8.0:
+            if time_limit >= 8.0:
                 adaptive_depth = 6
-            elif time_limit >= 5.0:
+            elif time_limit >= 2.5:
                 adaptive_depth = 5
-            elif time_limit >= 3.0:
+            elif time_limit >= 1.2:
                 adaptive_depth = 4
-            elif time_limit >= 1.5:
+            elif time_limit >= 0.8:
                 adaptive_depth = 3
-            elif time_limit >= 0.5:
+            elif time_limit >= 0.3:
                 adaptive_depth = 2
             else:
                 adaptive_depth = 1
