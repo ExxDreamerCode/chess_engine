@@ -1003,7 +1003,7 @@ class ChessEngine:
 
 
 class ChessAI:
-    def __init__(self, engine, depth=4):
+    def __init__(self, engine, depth=5):
         self.engine = engine
         self.depth = depth
         self.nodes_searched = 0
