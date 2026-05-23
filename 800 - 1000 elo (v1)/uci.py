@@ -3,7 +3,6 @@ import math
 import time
 from ChessEngine import ChessEngine, ChessAI
 
-
 class UCIEngine:
     def __init__(self):
         self.engine = ChessEngine()
@@ -37,8 +36,6 @@ class UCIEngine:
                 elif line == "ucinewgame":
                     self.engine = ChessEngine()
                     self.ai = ChessAI(self.engine, depth=4)
-                    global transposition_table
-                    transposition_table.clear()
                 elif line.startswith("position"):
                     self.set_position(line)
                 elif line.startswith("go"):
