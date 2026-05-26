@@ -161,8 +161,9 @@ class UCI:
             moves_to_go = max(1, self.moves_to_go)
 
             if time_left_ms <= 30000:
-                allocated_time = int(time_left_ms * 0.1) + inc_ms
-                allocated_time = max(50, allocated_time)
+                percent = 0.06 if inc_ms == 0 else 0.1
+                allocated_time = int(time_left_ms * percent) + inc_ms
+                allocated_time = max(50, min(allocated_time, int(time_left_ms * 0.3)))
             elif time_left_ms <= 120000:
                 allocated_time = time_left_ms // moves_to_go + inc_ms // 2
                 allocated_time = min(allocated_time, int(time_left_ms * 0.4))
@@ -171,7 +172,6 @@ class UCI:
                 allocated_time = min(allocated_time, int(time_left_ms * 0.3))
 
             allocated_time = min(allocated_time, int(time_left_ms * 0.8))
-
             return max(0.05, allocated_time / 1000.0)
 
         return 0.1

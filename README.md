@@ -92,7 +92,7 @@ DreamerExx v2 против четырёх движков на Python
 | Против Beast | 3 победы из 3 |
 | Общий результат | 6.0 очков из 12 (50%) |
 
-[Смотреть полный PGN турнира](sample_game.pgn)  
+[Смотреть полный PGN турнира](Test_V2.pgn)  
 
 ---
 
@@ -110,7 +110,7 @@ DreamerExx v2 против четырёх движков на Python
 
 | Версия | Lichess | Пуля | Блиц | Рапид | Статус |
 |--------|---------|------|------|-------|--------|
-| **V3** | [@DreamerExx_V3](https://lichess.org/@/DreamerExx_V3) | ~? | ~? | ~? | 🚧 Скоро |
+| **V3** | [@DreamerExx_V3](https://lichess.org/@/DreamerExxV3) | ~? | ~? | ~? | 🚧 Скоро |
 | **V2** | [@DreamerExx_V2](https://lichess.org/@/DreamerExx_V2) | ~1700 | ~1600 | ~1700 | 🔥 Активен |
 | **V1** | [@DreamerExx_V1](https://lichess.org/@/DreamerExx_V1) | ~700 | ~700 | ~700 | 🦴 Исторический |
 
