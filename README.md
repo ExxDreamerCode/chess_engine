@@ -110,8 +110,8 @@ DreamerExx v2 против четырёх движков на Python
 
 | Версия | Lichess | Пуля | Блиц | Рапид | Статус |
 |--------|---------|------|------|-------|--------|
-| **V3** | [@DreamerExx_V3](https://lichess.org/@/DreamerExxV3) | ~? | ~? | ~? | 🚧 Скоро |
-| **V2** | [@DreamerExx_V2](https://lichess.org/@/DreamerExx_V2) | ~1700 | ~1600 | ~1700 | 🔥 Активен |
+| **V3** | [@DreamerExx_V3](https://lichess.org/@/DreamerExxV3) | ~1850 | ~1900 | ~1900 | 🔥 Активен |
+| **V2** | [@DreamerExx_V2](https://lichess.org/@/DreamerExx_V2) | ~1700 | ~1550 | ~1800 | 🔥 Активен |
 | **V1** | [@DreamerExx_V1](https://lichess.org/@/DreamerExx_V1) | ~700 | ~700 | ~700 | 🦴 Исторический |
 
 ---
