@@ -123,7 +123,6 @@ KING_ACTIVITY_TABLE = [
 
 
 class Board:
-
     def __init__(self):
         self.board = self.get_initial_board()
         self.turn = 'white'

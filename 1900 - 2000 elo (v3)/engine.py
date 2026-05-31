@@ -7,7 +7,6 @@ from opening_book import find_book_moves
 
 
 class ChessEngine:
-
     def __init__(self):
         self.board = Board()
         self.search = Search(self.board)

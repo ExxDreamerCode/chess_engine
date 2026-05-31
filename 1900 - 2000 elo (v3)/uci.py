@@ -4,7 +4,6 @@ from engine import ChessEngine
 
 
 class UCI:
-
     def __init__(self):
         self.engine = ChessEngine()
         self.thinking_time = {}
@@ -140,6 +139,19 @@ class UCI:
                 idx += 1
 
         time_limit = self._calculate_time()
+
+        if self.have_time_control:
+            color = self.engine.board.turn
+            time_left_ms = self.time_left.get(color, 0)
+            inc_ms = self.inc.get(color, 0)
+
+            if time_left_ms < 5000:
+                depth_limit = 2
+            elif time_left_ms < 10000:
+                if inc_ms < 500:
+                    depth_limit = 3
+                else:
+                    depth_limit = 4
 
         best_move = self.engine.find_best_move(time_limit=time_limit, depth_limit=depth_limit)
 
